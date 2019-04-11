@@ -33,3 +33,5 @@ The web page has not been created, but the desired information could be easily f
 - "Alice can use the Web page to split her ether" => There's a public payable function called splitMyMoney().
 
 I also added a function for the user to be able to spend her balance, instead of sending new ETH every single time. It's called splitMyLocalBalance().
+
+PS: Right now, unit tests are not implemented. They will be in the next iteraction, I hope.
