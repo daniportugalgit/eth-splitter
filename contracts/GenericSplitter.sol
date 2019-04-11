@@ -50,39 +50,19 @@ contract GenericSplitter {
 
 	event MoneySplitted(uint totalAmount, address indexed from, address indexed beneficiary1, address indexed beneficiary2);
 
-	function splitMyMoney(address payable beneficiary1, address payable beneficiary2) public payable {
-		require(msg.value > 0, "You must send ETH.");
+	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable {
+		require(msg.value + balances[msg.sender] >= amount, "Insufficient ETH sent.");
 		require(beneficiary1 != address(0) && beneficiary2 != address(0), "Please verify the beneficiaries addresses."); //would burn tokens
 		require(beneficiary1 != msg.sender && beneficiary2 != msg.sender, "You cannot be a beneficiary of the split."); //would cheat
 		require(beneficiary1 != beneficiary2, "Both addresses are the same. This is forbidden."); //would not actually split anything
 
-		uint half = msg.value.div(2);
-		uint remaining = msg.value.sub(half.mul(2));
+		uint half = amount.div(2);
+		uint remaining = amount.sub(half.mul(2));
 
 		balances[beneficiary1] = balances[beneficiary1].add(half);
 		balances[beneficiary2] = balances[beneficiary2].add(half);
-		if(remaining > 0) {
-			balances[msg.sender] = balances[msg.sender].add(remaining);
-		}
+		balances[msg.sender] = balances[msg.sender].sub(amount.sub(msg.value)).add(remaining);
 		
-		emit MoneySplitted(msg.value, msg.sender, beneficiary1, beneficiary2);
-	}
-
-	//This could be either controlled by the website transparently, or the user could have a checkbox when able to use her balance:
-	//amount is in WEI!
-	function splitMyLocalBalance(uint amount, address payable beneficiary1, address payable beneficiary2) public {
-		require(balances[msg.sender] >= amount, "Insufficient balance.");
-		require(beneficiary1 != address(0) && beneficiary2 != address(0), "Please verify the beneficiaries addresses."); //would burn tokens
-		require(beneficiary1 != msg.sender && beneficiary2 != msg.sender, "You cannot be a beneficiary of the split."); //would cheat
-		require(beneficiary1 != beneficiary2, "Both addresses are the same. This is forbidden."); //would not actually split anything
-
-		uint b1Part = amount.div(2);
-		uint b2Part = amount.sub(b1Part);
-
-		balances[msg.sender] = balances[msg.sender].sub(amount);
-		balances[beneficiary1] = balances[beneficiary1].add(b1Part);
-		balances[beneficiary2] = balances[beneficiary2].add(b2Part);
-
 		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
 	}
 
