@@ -26,12 +26,11 @@ Solution:
 I've create two contracts. The first one is called StrictSplitter and it does exactly what the briefing says. The are ONLY 3 people. "Alice" is not a generic person, it is actually a specific person called Alice. She is the owner of the contract and only she can send ETH and split her money. Bob and Carol must be registered beforehand. Thus, the system works in a very strict sense.
 
 The second contract is called GenericSplitter and does what I understand it should do: it allows any given 3 people to use the contract in an on-demand basis, meaning that each time person A ("Alice") wants to split her money between two other people, she can. She passes the addresses of the two beneficiaries and sends ETH. The system stores balances for every beneficiary and allows them to withdraw funds. In this manner, today I may be a "Bob" (a beneficiary), but tomorrow I might want to split my money, effectively being an "Alice" (someone who sends ETH to be splitted).
+Also, in GenericSplitter it's possible to send less ETH than you mean to split, as long as you have enough local balance to complete the transaction.
 
 The web page has not been created, but the desired information could be easily fetched from the blockchain as follows:
-- "We can see the balance of the Splitter contract on the Web page" => there's a public view function called totalBalance().
+- "We can see the balance of the Splitter contract on the Web page" => There's a native web3 function that does just that.
 - "We can see the balances of Alice, Bob and Carol on the Web page" => There's a public mapping called balances.
 - "Alice can use the Web page to split her ether" => There's a public payable function called splitMyMoney().
-
-I also added a function for the user to be able to spend her balance, instead of sending new ETH every single time. It's called splitMyLocalBalance().
 
 PS: Right now, unit tests are not implemented. They will be in the next iteraction, I hope.
