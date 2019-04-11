@@ -56,11 +56,14 @@ contract GenericSplitter {
 		require(beneficiary1 != msg.sender && beneficiary2 != msg.sender, "You cannot be a beneficiary of the split."); //would cheat
 		require(beneficiary1 != beneficiary2, "Both addresses are the same. This is forbidden."); //would not actually split anything
 
-		uint b1Part = msg.value.div(2);
-		uint b2Part = msg.value.sub(b1Part);
+		uint half = msg.value.div(2);
+		uint remaining = msg.value.sub(half.mul(2));
 
-		balances[beneficiary1] = balances[beneficiary1].add(b1Part);
-		balances[beneficiary2] = balances[beneficiary2].add(b2Part);
+		balances[beneficiary1] = balances[beneficiary1].add(half);
+		balances[beneficiary2] = balances[beneficiary2].add(half);
+		if(remaining > 0) {
+			balances[msg.sender] = balances[msg.sender].add(remaining);
+		}
 		
 		emit MoneySplitted(msg.value, msg.sender, beneficiary1, beneficiary2);
 	}
@@ -89,10 +92,6 @@ contract GenericSplitter {
 		uint amount = balances[msg.sender];
 		balances[msg.sender] = 0;
 		msg.sender.transfer(amount);
-	}
-
-	function totalBalance() public view returns (uint) {
-		return address(this).balance;
 	}
 
 	//Fallback: not interested in donations.
