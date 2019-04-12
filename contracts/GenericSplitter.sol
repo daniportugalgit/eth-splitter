@@ -1,14 +1,6 @@
-/*
-
-This is a generic version of the Splitter. It is meant for anyone to use it (not just Alice, Bob and Carol).
-Here, it's not necessary to register beneficiaries, nor to "own" the contract.
-The user will pass the beneficiaries addresses whenever she wants to split funds.
-It is also possible to use her local balance, instead of sending ether every time.
-
-*/
-
-
 pragma solidity 0.5.0;
+
+import "./Pausable.sol";
 
 library SafeMath {
 	function add(uint a, uint b) internal pure returns(uint) {
@@ -40,63 +32,6 @@ library SafeMath {
 		uint c = a / b;
 
 		return c;
-	}
-}
-
-contract Ownable {
-	address payable public owner;
-
-	event OwnershipTransferred(address newOwner);
-
-	constructor() public {
-		owner = msg.sender;
-	}
-
-	modifier onlyOwner() {
-		require(msg.sender == owner, "You are not the owner!");
-		_;
-	}
-
-	function transferOwnership(address payable newOwner) onlyOwner public {
-		require (newOwner != address(0), "Please verify the new address.");
-		require (newOwner != owner, "The new owner cannot be the same as the old owner.");
-
-		owner = newOwner;
-
-		emit OwnershipTransferred(owner);
-	}
-}
-
-contract Pausable is Ownable {
-	bool public isPaused;
-	
-	event ContractPaused(address indexed pausedBy);
-	event ContractResumed(address indexed resumedBy);
-	event ContractDestroyed(address indexed destroyedBy);
-	
-	modifier onlyPaused() {
-		require(isPaused == true, "The contract must be paused to perform this action.");
-		_;
-	}
-
-	modifier onlyReady() {
-		require(isPaused == false, "The contract is paused at the moment. Please contact the administrator.");
-		_;
-	}
-
-	function pause() public onlyOwner onlyReady {
-		isPaused = true;
-		emit ContractPaused(owner);
-	}
-
-	function resume() public onlyOwner onlyPaused {
-		isPaused = false;
-		emit ContractResumed(owner);
-	}
-
-	function killContract() public onlyOwner onlyPaused {
-		emit ContractDestroyed(owner);
-		selfdestruct(owner);
 	}
 }
 
@@ -132,7 +67,6 @@ contract GenericSplitter is Pausable {
 		msg.sender.transfer(amount);
 	}
 
-	//Fallback: not interested in donations.
 	function() external {
 		revert();
 	}
