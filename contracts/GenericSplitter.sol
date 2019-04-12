@@ -52,6 +52,7 @@ contract GenericSplitter {
 
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable {
 		require(msg.value + balances[msg.sender] >= amount, "Insufficient ETH sent.");
+		require(msg.value <= amount, "You are sending too much ether! Please review."); //user made a wrong calculation and would send excess ether
 		require(beneficiary1 != address(0) && beneficiary2 != address(0), "Please verify the beneficiaries addresses."); //would burn tokens
 		require(beneficiary1 != msg.sender && beneficiary2 != msg.sender, "You cannot be a beneficiary of the split."); //would cheat
 		require(beneficiary1 != beneficiary2, "Both addresses are the same. This is forbidden."); //would not actually split anything
@@ -62,7 +63,7 @@ contract GenericSplitter {
 		balances[beneficiary1] = balances[beneficiary1].add(half);
 		balances[beneficiary2] = balances[beneficiary2].add(half);
 		balances[msg.sender] = balances[msg.sender].sub(amount.sub(msg.value)).add(remaining);
-		
+	
 		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
 	}
 
