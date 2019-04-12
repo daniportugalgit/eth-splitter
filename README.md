@@ -1,7 +1,7 @@
 # eth-splitter
 Exercise: split your eth between two beneficiaries.
 
-What
+What (part 1)
 
 You will create a smart contract named Splitter whereby:
 
@@ -21,7 +21,7 @@ OBS:
 
 ########
 
-Solution:
+Solution (part 1):
 
 I've create two contracts. The first one is called StrictSplitter and it does exactly what the briefing says. The are ONLY 3 people. "Alice" is not a generic person, it is actually a specific person called Alice. She is the owner of the contract and only she can send ETH and split her money. Bob and Carol must be registered beforehand. Thus, the system works in a very strict sense.
 
@@ -34,3 +34,23 @@ The web page has not been created, but the desired information could be easily f
 - "Alice can use the Web page to split her ether" => There's a public payable function called splitMyMoney().
 
 PS: Right now, unit tests are not implemented. They will be in the next iteraction, I hope.
+
+#######
+
+What (part 2)
+
+- Create functions to pause/resume/kill the contract: Those become useful when some major issue happened and you want to stop all operations until you figure out what's happening, or if you no longer need this contract.
+- Only the owner of the contract can call those functions to change the state of the contract.
+- Add "conditions" to your current functions so that they can be called only when the contract is running (i.e. not paused or killed).
+- Add test scenarios for the above.
+
+######
+
+Solution (part 2):
+
+Two new contracts have been developed. The first one implements the classic Ownable pattern. The second is for pausing/resuming the contract.
+The Pausable contract also includes two levels of pausing: soft and hard. The hard mode uses the word "FROZEN" instead of "paused" and prevents users even from withdrawing funds. The "paused" state disallows splitting ether, but still allows withdrawals.
+
+The selfdestruct function can only be executed if the contract is frozen. Since it will transfer all funds to the owner, it is recommended that the contrat is first paused, then the users should be notified and given some time to perform withdrawals. Only then should the contract be frozen and, finally, destroyed.
+
+Unit tests still have not been implemented.
