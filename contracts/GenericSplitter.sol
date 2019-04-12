@@ -58,6 +58,9 @@ contract Ownable {
 	}
 
 	function transferOwnership(address payable newOwner) onlyOwner public {
+		require (newOwner != address(0), "Please verify the new address.");
+		require (newOwner != owner, "The new owner cannot be the same as the old owner.");
+
 		owner = newOwner;
 
 		emit OwnershipTransferred(owner);
@@ -65,57 +68,35 @@ contract Ownable {
 }
 
 contract Pausable is Ownable {
-	bool public isPaused; //works like a "soft pause": some actions may be performed while in this state.
-	bool public isFrozen; //works like a "hard pause": only the owner may perform actions while in this state, and only specific actions may be executed even by the owner.
-
+	bool public isPaused;
+	
 	event ContractPaused(address indexed pausedBy);
 	event ContractResumed(address indexed resumedBy);
-	event ContractFrozen(address indexed frozenBy);
-	event ContractUnfrozen(address indexed unfrozenBy);
-
+	event ContractDestroyed(address indexed destroyedBy);
+	
 	modifier onlyPaused() {
 		require(isPaused == true, "The contract must be paused to perform this action.");
 		_;
 	}
 
-	modifier onlyNotPaused() {
+	modifier onlyReady() {
 		require(isPaused == false, "The contract is paused at the moment. Please contact the administrator.");
 		_;
 	}
 
-	modifier onlyFrozen() {
-		require(isFrozen == true, "The contract must be frozen to perform this action.");
-		_;
-	}
-
-	modifier onlyNotFrozen() {
-		require(isFrozen == false, "The contract is frozen. Winter is coming.");
-		_;
-	}
-
-	modifier onlyReady() {
-		require(isFrozen == false && isPaused == false, "The contract must be unpaused and unfrozen to perform this action.");
-		_;
-	}
-
-	function pause() public onlyOwner {
+	function pause() public onlyOwner onlyReady {
 		isPaused = true;
 		emit ContractPaused(owner);
 	}
 
-	function resume() public onlyOwner {
+	function resume() public onlyOwner onlyPaused {
 		isPaused = false;
 		emit ContractResumed(owner);
 	}
 
-	function freeze() public onlyOwner {
-		isFrozen = true;
-		emit ContractFrozen(owner);
-	}
-
-	function unfreeze() public onlyOwner {
-		isFrozen = false;
-		emit ContractUnfrozen(owner);
+	function killContract() public onlyOwner onlyPaused {
+		emit ContractDestroyed(owner);
+		selfdestruct(owner);
 	}
 }
 
@@ -126,7 +107,6 @@ contract GenericSplitter is Pausable {
 
 	event MoneySplitted(uint totalAmount, address indexed from, address indexed beneficiary1, address indexed beneficiary2);
 
-	//The owner may pause (or freeze) this contract in order to prevent users from executing this function.
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable onlyReady {
 		require(msg.value + balances[msg.sender] >= amount, "Insufficient ETH sent.");
 		require(msg.value <= amount, "You are sending too much ether! Please review."); //user made a wrong calculation and would send excess ether
@@ -144,19 +124,12 @@ contract GenericSplitter is Pausable {
 		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
 	}
 
-	//Users may withdraw from a paused contract.
-	//That will allow us to inform users that the contract WILL be frozen or destroyed in a given timespan, so that they can withdraw their funds before it happens.
-	function withdraw() public onlyNotFrozen {
+	function withdraw() public onlyReady {
 		require(balances[msg.sender] > 0, "Insufficient funds.");
 
 		uint amount = balances[msg.sender];
 		balances[msg.sender] = 0;
 		msg.sender.transfer(amount);
-	}
-
-	//For safety, the owner can only destroy this contract if it's frozen.
-	function killContract() public onlyOwner onlyFrozen {
-		selfdestruct(owner);
 	}
 
 	//Fallback: not interested in donations.
