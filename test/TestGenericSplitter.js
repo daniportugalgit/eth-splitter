@@ -13,7 +13,6 @@ contract("GenericSplitter", accounts => {
         _instance = await GenericSplitter.new();
     })
 
-	//Sequential tests with the same deployed instance (because users may use their local balances to split):
 	it("should split correctly when value is even and user sends all the needed ETH", async () => {
 		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100})
 		let balance1 = await _instance.balances.call(account1);
