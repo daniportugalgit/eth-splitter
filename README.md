@@ -32,4 +32,4 @@ What (part 2)
 
 Part 3: unit tests
 
-My implementation seems cumbersome... I wanted to run some tests sequentially (without redeploying) in order to test the use of local balance in the split. But I had to manually redeploy whenever I wanted a clean contract. Doesn't seem the best way to do it. Anyway, it's working, but I'd like to find a better way without using beforeEach.
+Usingn async/await! :)
