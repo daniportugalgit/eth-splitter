@@ -2,6 +2,7 @@ const truffleAssert = require('truffle-assertions');
 const GenericSplitter = artifacts.require("GenericSplitter");
 
 contract("GenericSplitter", accounts => {
+	//Sequential tests with the same deployed instance:
 	it("should start with zeroed balances in all accounts", () => {
 		let _instance;
 
@@ -263,16 +264,13 @@ contract("GenericSplitter", accounts => {
 		})
 	});
 
-	it("should let owner pause contract", () => {
-		let _instance;
-
+	//Redeploys contract for isolated tests:
+	it("should let owner pause contract", async () => {
+		const _instance = await GenericSplitter.new();
+		
 		const account0 = accounts[0];
 				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			_instance = instance;
-			return _instance.pause({from: account0});
-		})
+		return _instance.pause({from: account0})
 		.then(() => {
 			return _instance.isPaused.call();
 		})
@@ -281,83 +279,85 @@ contract("GenericSplitter", accounts => {
 		})
 	});
 
-	it("should let owner unpause contract", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should let owner resume a paused contract", async () => {
+		const _instance = await GenericSplitter.new();
 
 		const account0 = accounts[0];
-				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			_instance = instance;
-			return _instance.resume({from: account0});
+		
+		return _instance.pause({from: account0})
+		.then(() => {
+			return _instance.resume({from: account0})
 		})
 		.then(() => {
 			return _instance.isPaused.call();
 		})
 		.then(isPaused => {
-			assert.equal(isPaused, false, "Contract has not been unpaused.");
+			assert.equal(isPaused, false, "Contract has not been resumed.");
 		})
 	});
 
-	it("should REVERT when owner tries to unpause the contract if not paused", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should REVERT when owner tries to resume the contract if not paused", async () => {
+		const _instance = await GenericSplitter.new();
 
 		const account0 = accounts[0];
 				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			return truffleAssert.reverts(instance.resume({from: account0}), truffleAssert.ErrorType.REVERT);
-		})
+		await truffleAssert.reverts(_instance.resume({from: account0}), truffleAssert.ErrorType.REVERT);
 	});
 
-	it("should REVERT when not-owner tries to pause contract", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should REVERT when not-owner tries to pause contract", async () => {
+		const _instance = await GenericSplitter.new();
 
 		const account1 = accounts[1];
 				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			return truffleAssert.reverts(instance.pause({from: account1}), truffleAssert.ErrorType.REVERT);
-		})
+		await truffleAssert.reverts(_instance.pause({from: account1}), truffleAssert.ErrorType.REVERT);
 	});
 
-	it("should REVERT when not-owner tries to unpause a paused contract", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should REVERT when not-owner tries to resume a paused contract", async () => {
+		const _instance = await GenericSplitter.new();
 
 		const account0 = accounts[0];
 		const account1 = accounts[1];
 				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			_instance = instance;
-			return _instance.pause({from: account0});
-		})
+		return _instance.pause({from: account0})
 		.then(() => {
 			return truffleAssert.reverts(_instance.resume({from: account1}), truffleAssert.ErrorType.REVERT);
 		})
 	});
 
-	it("should REVERT the split if contract is paused", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should REVERT the split if contract is paused", async () => {
+		const _instance = await GenericSplitter.new();
 
+		const account0 = accounts[0];
 		const account1 = accounts[1];
 		const account2 = accounts[2];
 		const account3 = accounts[3];
 				
-		return GenericSplitter.deployed()
-		.then(instance => {
-			return truffleAssert.reverts(instance.splitMyMoney(100, account2, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
+		return _instance.pause({from: account0})
+		.then(() => {
+			return truffleAssert.reverts(_instance.splitMyMoney(100, account2, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
 		})
 	});
 
-	it("should REVERT the withdraw if contract is paused", () => {
-		let _instance;
+	//Redeploys contract for isolated tests:
+	it("should REVERT the withdraw if contract is paused", async () => {
+		const _instance = await GenericSplitter.new();
 		
+		const account0 = accounts[0];
+		const account1 = accounts[1];
 		const account2 = accounts[2];
-						
-		return GenericSplitter.deployed()
-		.then(instance => {
-			return truffleAssert.reverts(instance.withdraw({from: account2}), truffleAssert.ErrorType.REVERT);
+		const account3 = accounts[3];
+		
+		return _instance.splitMyMoney(100, account2, account3, {from: account1, value:100})
+		.then(() => {	
+			return _instance.pause({from: account0});
+		})
+		.then(() => {
+			return truffleAssert.reverts(_instance.withdraw({from: account2}), truffleAssert.ErrorType.REVERT);
 		})
 	});
 });
