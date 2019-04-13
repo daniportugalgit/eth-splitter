@@ -2,7 +2,7 @@ const truffleAssert = require('truffle-assertions');
 const GenericSplitter = artifacts.require("GenericSplitter");
 
 contract("GenericSplitter", accounts => {
-	//Sequential tests with the same deployed instance:
+	//Sequential tests with the same deployed instance (because users may use their local balances to split):
 	it("should start with zeroed balances in all accounts", () => {
 		let _instance;
 
@@ -151,8 +151,6 @@ contract("GenericSplitter", accounts => {
 	});
 
 	it("should REVERT the split when user sends less ETH than amount and has 0 balance", () => {
-		let _instance;
-
 		const account4 = accounts[4];
 		const account2 = accounts[2];
 		const account3 = accounts[3];
@@ -164,8 +162,6 @@ contract("GenericSplitter", accounts => {
 	});
 
 	it("should REVERT the split when user sends less ETH than amount + balance", () => {
-		let _instance;
-
 		const account1 = accounts[1];
 		const account2 = accounts[2];
 		const account3 = accounts[3];
@@ -177,8 +173,6 @@ contract("GenericSplitter", accounts => {
 	});
 
 	it("should REVERT the split when user sends more ETH than amount", () => {
-		let _instance;
-
 		const account1 = accounts[1];
 		const account2 = accounts[2];
 		const account3 = accounts[3];
@@ -224,8 +218,6 @@ contract("GenericSplitter", accounts => {
 	});
 
 	it("should REVERT the split when beneficiary1 == beneficiary2", () => {
-		let _instance;
-
 		const account1 = accounts[1];
 		const account2 = accounts[2];
 		
@@ -254,8 +246,6 @@ contract("GenericSplitter", accounts => {
 	});
 
 	it("should REVERT the withdraw if balance == 0", () => {
-		let _instance;
-
 		const account1 = accounts[1];
 				
 		return GenericSplitter.deployed()
@@ -360,55 +350,149 @@ contract("GenericSplitter", accounts => {
 			return truffleAssert.reverts(_instance.withdraw({from: account2}), truffleAssert.ErrorType.REVERT);
 		})
 	});
+	
+	//Redeploys contract for isolated tests:
+	it("should allow owner to change ownership to valid address", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+		const account1 = accounts[1];
+
+		return _instance.transferOwnership(account1, {from: account0})
+		.then(() => {
+			return _instance.owner.call();
+		})
+		.then((newOwner) => {
+			assert.equal(newOwner, account1, "Ownership has not changed.");
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should REVERT TransferOwnership if new owner is addres(0)", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+
+		await truffleAssert.reverts(_instance.transferOwnership("0x0000000000000000000000000000000000000000", {from: account0}), truffleAssert.ErrorType.REVERT);
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should REVERT TransferOwnership if new owner is the same as old owner", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+
+		await truffleAssert.reverts(_instance.transferOwnership(account0, {from: account0}), truffleAssert.ErrorType.REVERT);
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should REVERT TransferOwnership if msg.sender is not the owner", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account1 = accounts[1];
+		const account2 = accounts[2];
+
+		await truffleAssert.reverts(_instance.transferOwnership(account1, {from: account2}), truffleAssert.ErrorType.REVERT);
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should emit event with correct parameters when a Split is made", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account1 = accounts[1];
+		const account2 = accounts[2];
+		const account3 = accounts[3];
+
+		return _instance.splitMyMoney(100, account2, account3, {from: account1, value:100})
+		.then(result => {
+			truffleAssert.eventEmitted(result, 'MoneySplitted', (ev) => {
+			    return ev.totalAmount == 100 && ev.from == account1 && ev.beneficiary1 == account2 && ev.beneficiary2 == account3;
+			});
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should emit event with correct parameters when the ownership is transeferred", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+		const account1 = accounts[1];
+		
+		return _instance.transferOwnership(account1, {from: account0})
+		.then(result => {
+			truffleAssert.eventEmitted(result, 'OwnershipTransferred', (ev) => {
+			    return ev.newOwner == account1;
+			});
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should emit event with correct parameters when the contract is paused", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+
+		return _instance.pause({from: account0})
+		.then(result => {
+			truffleAssert.eventEmitted(result, 'ContractPaused', (ev) => {
+			    return ev.pausedBy == account0;
+			});
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should emit event with correct parameters when the contract is resumed", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+
+		return _instance.pause({from: account0})
+		.then(() => {
+			return _instance.resume({from: account0});
+		})
+		.then(result => {
+			truffleAssert.eventEmitted(result, 'ContractResumed', (ev) => {
+			    return ev.resumedBy == account0;
+			});
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should REVERT killContract if contract is not paused", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+		
+		await truffleAssert.reverts(_instance.killContract({from: account0}), truffleAssert.ErrorType.REVERT);
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should REVERT killContract if paused && msg.sender is not the owner", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+		const account1 = accounts[1];
+		
+		return _instance.pause({from: account0})
+		.then(() => {
+			return truffleAssert.reverts(_instance.killContract({from: account1}), truffleAssert.ErrorType.REVERT);
+		})
+	});
+
+	//Redeploys contract for isolated tests:
+	it("should destroy contract if paused && msg.sender == owner", async () => {
+		const _instance = await GenericSplitter.new();
+
+		const account0 = accounts[0];
+				
+		return _instance.pause({from: account0})
+		.then(() => {
+			return _instance.killContract({from: account0});
+		})
+		.then(result => {
+			truffleAssert.eventEmitted(result, 'ContractDestroyed', (ev) => {
+			    return ev.destroyedBy == account0;
+			});
+		})
+	});
 });
-
-
-/*
-- Able to change ownership
- > if new owner is not 0;
- > if new owner is not the same as the old owner
-
-- Fail to change ownership
- > If new owner is 0;
- > if new owner is the same as old owner
- > if msg.sender is not the owner
-
-- Should fire event when
- > Split is made
- > Owership transferred
- > Contrat paused
- > Contract unpaused
-
- - Unable to destroy contract
-  > If contract is ready
-  > If msg.sender is not the owner 
-
- - Able to destroy contract
-  > if isPaused == true;
-
-
-
-
-
-
-####
-DONE:
-- Fail the split if
- DONE > user sends less ETH than amount and has 0 balance
- DONE > user sends less ETH than amount + balance
- DONE > user sends more ETH than amount
- DONE > msg.sender equals beneficiary1 || beneficiary2
- DONE > beneficiary1 equals 0 or beneficiary2 equals 0
- DONE > beneficiary1 == beneficiary2
-
-DONE - Able to withdraw if has balance
-DONE - Revert withdraw if balance == 0
-
-DONE - should let owner pause contract
-DONE - should let owner unpause if paused
-DONE - should REVERT when owner tries to unpause the contract if not paused
-DONE - should REVERT if not-owner tries to pause contract
-DONE - should REVERT if not-owner tries to unpause a paused contract
-DONE - Fail the split if contract is paused
-DONE - Fail the withdraw if contract is paused
-*/
