@@ -1,7 +1,7 @@
 pragma solidity 0.5.0;
 
 contract Ownable {
-	address payable public owner;
+	address payable private owner;
 
 	event OwnershipTransferred(address newOwner);
 
@@ -21,5 +21,9 @@ contract Ownable {
 		owner = newOwner;
 
 		emit OwnershipTransferred(owner);
+	}
+
+	function getOwner() public view returns(address payable) {
+		return owner;
 	}
 }

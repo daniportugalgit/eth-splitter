@@ -3,7 +3,7 @@ pragma solidity 0.5.0;
 import "./Ownable.sol";
 
 contract Pausable is Ownable {
-	bool public isPaused;
+	bool private isPaused;
 	
 	event ContractPaused(address indexed pausedBy);
 	event ContractResumed(address indexed resumedBy);
@@ -21,16 +21,20 @@ contract Pausable is Ownable {
 
 	function pause() public onlyOwner onlyReady {
 		isPaused = true;
-		emit ContractPaused(owner);
+		emit ContractPaused(getOwner());
 	}
 
 	function resume() public onlyOwner onlyPaused {
 		isPaused = false;
-		emit ContractResumed(owner);
+		emit ContractResumed(getOwner());
 	}
 
 	function killContract() public onlyOwner onlyPaused {
-		emit ContractDestroyed(owner);
-		selfdestruct(owner);
+		emit ContractDestroyed(getOwner());
+		selfdestruct(getOwner());
+	}
+
+	function getIsPaused() public view returns(bool) {
+		return isPaused;
 	}
 }

@@ -10,7 +10,7 @@ contract("GenericSplitter", accounts => {
 	let _instance;
 
 	beforeEach('setup contract for each test', async function () {
-        _instance = await GenericSplitter.new();
+        _instance = await GenericSplitter.new({from:account0});
     })
 
 	it("should split correctly when value is even and user sends all the needed ETH", async () => {
@@ -99,14 +99,14 @@ contract("GenericSplitter", accounts => {
 
 	it("should let owner pause contract", async () => {
 		await _instance.pause({from: account0});
-		let isPaused = await _instance.isPaused.call();
+		let isPaused = await _instance.getIsPaused.call();
 		assert.strictEqual(isPaused, true, "Contract has not been paused.");
 	});
 
 	it("should let owner resume a paused contract", async () => {
 		await _instance.pause({from: account0});
 		await _instance.resume({from: account0});
-		let isPaused = await _instance.isPaused.call();
+		let isPaused = await _instance.getIsPaused.call();
 		assert.strictEqual(isPaused, false, "Contract has not been resumed.");
 	});
 
@@ -136,7 +136,7 @@ contract("GenericSplitter", accounts => {
 	
 	it("should allow owner to change ownership to valid address", async () => {
 		await _instance.transferOwnership(account1, {from: account0})
-		let newOwner = await _instance.owner.call();
+		let newOwner = await _instance.getOwner.call();
 		assert.strictEqual(newOwner, account1, "Ownership has not changed.");
 	});
 
@@ -178,6 +178,14 @@ contract("GenericSplitter", accounts => {
 		let result = await _instance.resume({from: account0});
 		await truffleAssert.eventEmitted(result, 'ContractResumed', (ev) => {
 		    return ev.resumedBy == account0;
+		});
+	});
+
+	it("should emit event with correct parameters when a whithdrawal happens", async () => {
+		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
+		let result = await _instance.withdraw({from: account2});
+		await truffleAssert.eventEmitted(result, 'Withdrawal', (ev) => {
+		    return ev.amount == 50 && ev.from == account2;
 		});
 	});
 

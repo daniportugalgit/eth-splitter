@@ -41,6 +41,7 @@ contract GenericSplitter is Pausable {
 	mapping(address => uint) public balances;
 
 	event MoneySplitted(uint totalAmount, address indexed from, address indexed beneficiary1, address indexed beneficiary2);
+	event Withdrawal(uint amount, address indexed from);
 
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable onlyReady {
 		require(msg.value + balances[msg.sender] >= amount, "Insufficient ETH sent.");
@@ -65,6 +66,8 @@ contract GenericSplitter is Pausable {
 		uint amount = balances[msg.sender];
 		balances[msg.sender] = 0;
 		msg.sender.transfer(amount);
+
+		emit Withdrawal(amount, msg.sender);
 	}
 
 	function() external {
