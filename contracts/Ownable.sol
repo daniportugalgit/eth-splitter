@@ -20,7 +20,7 @@ contract Ownable {
 
 		owner = newOwner;
 
-		emit OwnershipTransferred(owner);
+		emit OwnershipTransferred(newOwner); //it's cheaper to use newOwner (parameter) than owner (storage)
 	}
 
 	function getOwner() public view returns(address payable) {

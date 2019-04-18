@@ -2,11 +2,7 @@ const truffleAssert = require('truffle-assertions');
 const GenericSplitter = artifacts.require("GenericSplitter");
 
 contract("GenericSplitter", accounts => {
-	const account0 = accounts[0];
-	const account1 = accounts[1];
-	const account2 = accounts[2];
-	const account3 = accounts[3];
-	const account4 = accounts[4];
+	const [account0, account1, account2, account3, account4] = accounts;
 	let _instance;
 
 	beforeEach('setup contract for each test', async function () {
@@ -99,14 +95,14 @@ contract("GenericSplitter", accounts => {
 
 	it("should let owner pause contract", async () => {
 		await _instance.pause({from: account0});
-		let isPaused = await _instance.getIsPaused.call();
+		let isPaused = await _instance.isPaused.call();
 		assert.strictEqual(isPaused, true, "Contract has not been paused.");
 	});
 
 	it("should let owner resume a paused contract", async () => {
 		await _instance.pause({from: account0});
 		await _instance.resume({from: account0});
-		let isPaused = await _instance.getIsPaused.call();
+		let isPaused = await _instance.isPaused.call();
 		assert.strictEqual(isPaused, false, "Contract has not been resumed.");
 	});
 
@@ -189,20 +185,33 @@ contract("GenericSplitter", accounts => {
 		});
 	});
 
-	it("should REVERT killContract if contract is not paused", async () => {
-		await truffleAssert.reverts(_instance.killContract({from: account0}), truffleAssert.ErrorType.REVERT);
+	it("should REVERT freezeContract if contract is not paused", async () => {
+		await truffleAssert.reverts(_instance.freeze({from: account0}), truffleAssert.ErrorType.REVERT);
 	});
 
-	it("should REVERT killContract if paused && msg.sender is not the owner", async () => {
+	it("should REVERT freezeContract if paused && msg.sender is not the owner", async () => {
 		await _instance.pause({from: account0});
-		await truffleAssert.reverts(_instance.killContract({from: account1}), truffleAssert.ErrorType.REVERT);
+		await truffleAssert.reverts(_instance.freeze({from: account1}), truffleAssert.ErrorType.REVERT);
 	});
 
-	it("should destroy contract if paused && msg.sender == owner", async () => {	
+	it("should let owner freeze contract if paused", async () => {
 		await _instance.pause({from: account0});
-		let result = await _instance.killContract({from: account0});
-		await truffleAssert.eventEmitted(result, 'ContractDestroyed', (ev) => {
-		    return ev.destroyedBy == account0;
+		await _instance.freeze({from: account0});
+		let isFrozen = await _instance.isFrozen.call();
+		assert.strictEqual(isFrozen, true, "Contract has not been frozen.");
+	});
+
+	it("should emit event with correct parameters when frozen", async () => {	
+		await _instance.pause({from: account0});
+		let result = await _instance.freeze({from: account0});
+		await truffleAssert.eventEmitted(result, 'ContractFrozen', (ev) => {
+		    return ev.frozenBy == account0;
 		});
 	});
+
+	//Its impossible to freeze the contract unless it is paused,
+	//It's impossible to resume it once it is frozen,
+	//It's impossible to unfreeze it once it's frozen.
+	//Therefore, there's no need to test the split and the withdrawal with the frozen flag;
+	//The tests with the paused flag will sufice.
 });

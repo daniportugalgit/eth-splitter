@@ -3,38 +3,49 @@ pragma solidity 0.5.0;
 import "./Ownable.sol";
 
 contract Pausable is Ownable {
-	bool private isPaused;
+	bool private paused;
+	bool private frozen;
 	
 	event ContractPaused(address indexed pausedBy);
 	event ContractResumed(address indexed resumedBy);
-	event ContractDestroyed(address indexed destroyedBy);
+	event ContractFrozen(address indexed frozenBy);
 	
 	modifier onlyPaused() {
-		require(isPaused == true, "The contract must be paused to perform this action.");
+		require(paused, "The contract must be paused to perform this action.");
 		_;
 	}
 
 	modifier onlyReady() {
-		require(isPaused == false, "The contract is paused at the moment. Please contact the administrator.");
+		require(!paused && !frozen, "The contract is paused or frozen. Please contact the administrator.");
+		_;
+	}
+
+	modifier onlyNotFrozen() {
+		require(!frozen, "The contract is already frozen. Please contact the administrator.");
 		_;
 	}
 
 	function pause() public onlyOwner onlyReady {
-		isPaused = true;
-		emit ContractPaused(getOwner());
+		paused = true;
+		emit ContractPaused(msg.sender);
 	}
 
-	function resume() public onlyOwner onlyPaused {
-		isPaused = false;
-		emit ContractResumed(getOwner());
+	function resume() public onlyOwner onlyPaused onlyNotFrozen {
+		paused = false;
+		emit ContractResumed(msg.sender);
 	}
 
-	function killContract() public onlyOwner onlyPaused {
-		emit ContractDestroyed(getOwner());
-		selfdestruct(getOwner());
+	//CANNOT BE UNDONE:
+	function freeze() public onlyOwner onlyPaused onlyNotFrozen {
+		frozen = true;
+		emit ContractFrozen(msg.sender);
 	}
 
-	function getIsPaused() public view returns(bool) {
-		return isPaused;
+	function isPaused() public view returns(bool) {
+		return paused;
+	}
+
+	function isFrozen() public view returns(bool) {
+		return frozen;
 	}
 }
