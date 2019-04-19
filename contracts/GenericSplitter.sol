@@ -13,6 +13,8 @@ contract GenericSplitter is Pausable {
 
 	//@GAS with one SLOAD for balance: 70211 (current implementation)
 	//@GAS with two SLOAD for balance: 70487
+	//@GAS when there's no remaining: 69836
+	//@GAS when there's    remaining: 90280
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable onlyReady {
 		uint senderBalance = balances[msg.sender];
 		require(msg.value + senderBalance >= amount, "Insufficient ETH sent.");
@@ -23,10 +25,13 @@ contract GenericSplitter is Pausable {
 
 		uint half = amount.div(2);
 		uint remaining = amount.sub(half.mul(2));
-
+		
 		balances[beneficiary1] = balances[beneficiary1].add(half);
 		balances[beneficiary2] = balances[beneficiary2].add(half);
-		balances[msg.sender] = senderBalance.sub(amount.sub(msg.value)).add(remaining);
+
+		if(amount > msg.value || remaining != 0) {
+			balances[msg.sender] = senderBalance.sub(amount.sub(msg.value)).add(remaining);
+		}
 	
 		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
 	}

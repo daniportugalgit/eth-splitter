@@ -158,7 +158,7 @@ contract("GenericSplitter", accounts => {
 	it("should emit event with correct parameters when the ownership is transeferred", async () => {		
 		let result = await _instance.transferOwnership(account1, {from: account0});
 		await truffleAssert.eventEmitted(result, 'OwnershipTransferred', (ev) => {
-		    return ev.newOwner == account1;
+		    return ev.from == account0 && ev.to == account1;
 		});
 	});
 
@@ -209,9 +209,26 @@ contract("GenericSplitter", accounts => {
 		});
 	});
 
+	it("should actually transfer ETH when someone withdraws", async () => {
+		let balanceBefore = await web3.eth.getBalance(account4);
+
+		await _instance.splitMyMoney(100, account2, account4, {from: account1, value:100, gasPrice:10}); //account1 deposits 50 in account2 and 50 in account3
+		let tx = await _instance.withdraw({from: account4});
+		let receipt = tx.receipt;
+				
+		let gasPrice = await web3.eth.getGasPrice();
+		let gasCost = gasPrice * receipt.gasUsed;
+		assert.strictEqual("21484", receipt.gasUsed.toString(10), "Gas used is wrong.");
+		
+		let expected = web3.utils.toBN(balanceBefore).add(web3.utils.toBN(50)).sub(web3.utils.toBN(gasCost));
+		let balanceAfter = await web3.eth.getBalance(account4);
+
+		assert.strictEqual(balanceAfter.toString(10), expected.toString(10), "User has not received ETH after withdraw.");
+	});
+
 	//Its impossible to freeze the contract unless it is paused,
 	//It's impossible to resume it once it is frozen,
 	//It's impossible to unfreeze it once it's frozen.
 	//Therefore, there's no need to test the split and the withdrawal with the frozen flag;
-	//The tests with the paused flag will sufice.
+	//The tests with the paused flag will suffice.
 });
