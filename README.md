@@ -33,3 +33,9 @@ What (part 2)
 Part 3: unit tests
 
 Usingn async/await! :)
+
+#####
+
+Part 4: Simple GUI
+
+Please, test my hosted version here: http://exchange.funpowerhouse.com/b9-projects/splitter/
