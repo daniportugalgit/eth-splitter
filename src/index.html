@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Ether Splitter</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container" style="width: 650px;">
+      <div class="row">
+        <div class="col-lg-12">
+          <h1 class="text-center">Ether Splitter</h1>
+          <h4 class="text-center">Easily split your money between two beneficiaries</h4>
+          <p id="accountAddress" class="text-center" style="font-weight: bold;"></p>
+          <div id="connect" style="display: none;">
+            <form onSubmit="App.metamaskConnect(); return false;">
+              <div>
+                <button type="submit" class="btn btn-primary" style="margin:auto; display:block;">Connect to Metamask</button>
+              </div>
+            </form>
+            <hr/>
+          </div>
+          <br>
+          <div id="loader">
+            <p class="text-center">Fetching Blockchain Data. This may take a few seconds...</p>
+          </div>
+          <div id="content" style="display: none;">
+            
+            <form onSubmit="App.splitMyMoney(); return false;">
+              <h3>Split my money</h3>
+              <br>Wei:<br>
+              <input name="ethToSend" id="ethToSend" required style="width: 200px;" onkeyup="App.updateMoneyToSplit();">
+              <br>Beneficiary 1:<br>
+              <input name="beneficiary1" id="beneficiary1" required style="width: 350px;">
+              <br>Beneficiary 2:<br>
+              <input name="beneficiary2" id="beneficiary2" required style="width: 350px;">
+              <br>
+              If your balance is greater than zero, you may split it too!<br>
+              How much do you want to split (in total)?<br>
+              <input name="moneyToSplit" id="moneyToSplit" required style="width: 200px;">
+              <button type="submit" class="btn btn-primary">Split it!</button><br><br>
+              <p id="txSent"></p>
+              <hr />
+            </form>
+
+            <form onSubmit="App.getBalanceOf(); return false;">
+              <h3>Check balance of</h3>
+              Address:<br>
+              <input name="addressToCheck" id="addressToCheck" required style="width: 350px;">
+              <button type="submit" class="btn btn-primary">Fetch balance</button><br><br>
+              <p id="userBalance"></p>
+              <hr />
+            </form>       
+
+            <form onSubmit="App.withdraw(); return false;">
+              <h3>Withdraw your balance</h3>
+              <button type="submit" class="btn btn-primary">Withdraw</button><br><br>
+              <hr />
+            </form>
+          </div>
+        </div>
+      </div>
+      <BR><BR>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/web3.min.js"></script>
+    <script src="js/truffle-contract.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
