@@ -11,10 +11,6 @@ contract GenericSplitter is Pausable {
 	event MoneySplitted(uint totalAmount, address indexed from, address indexed beneficiary1, address indexed beneficiary2);
 	event Withdrawal(uint amount, address indexed from);
 
-	//@GAS with one SLOAD for balance: 70211 (current implementation)
-	//@GAS with two SLOAD for balance: 70487
-	//@GAS when there's no remaining: 69836
-	//@GAS when there's    remaining: 90280
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable onlyReady {
 		uint senderBalance = balances[msg.sender];
 		require(msg.value + senderBalance >= amount, "Insufficient ETH sent.");
@@ -36,8 +32,6 @@ contract GenericSplitter is Pausable {
 		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
 	}
 
-	//@GAS with one SLOAD: 21484 (current implementation)
-	//@GAS with two SLOAD: 21773
 	function withdraw() public onlyReady {
 		uint amount = balances[msg.sender];
 		require(amount > 0, "Insufficient funds.");
