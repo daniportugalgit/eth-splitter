@@ -8,8 +8,8 @@ contract GenericSplitter is Pausable {
 
 	mapping(address => uint) public balances;
 
-	event MoneySplitted(uint totalAmount, address indexed from, address indexed beneficiary1, address indexed beneficiary2);
-	event Withdrawal(uint amount, address indexed from);
+	event MoneySplitted(address indexed from, uint totalAmount, address indexed beneficiary1, address indexed beneficiary2);
+	event Withdrawal(address indexed from, uint amount);
 
 	function splitMyMoney(uint amount, address payable beneficiary1, address payable beneficiary2) public payable onlyReady {
 		uint senderBalance = balances[msg.sender];
@@ -29,14 +29,14 @@ contract GenericSplitter is Pausable {
 			balances[msg.sender] = senderBalance.sub(amount.sub(msg.value)).add(remaining);
 		}
 	
-		emit MoneySplitted(amount, msg.sender, beneficiary1, beneficiary2);
+		emit MoneySplitted(msg.sender, amount, beneficiary1, beneficiary2);
 	}
 
 	function withdraw() public onlyReady {
 		uint amount = balances[msg.sender];
 		require(amount > 0, "Insufficient funds.");
 		
-		emit Withdrawal(amount, msg.sender); //emits before the transfer to maintain the natural order of events in case the recipient also emits an event upon receiving funds
+		emit Withdrawal(msg.sender, amount); //emits before the transfer to maintain the natural order of events in case the recipient also emits an event upon receiving funds
 		balances[msg.sender] = 0;
 		msg.sender.transfer(amount);
 	}
