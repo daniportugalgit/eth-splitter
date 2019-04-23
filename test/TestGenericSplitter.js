@@ -10,7 +10,7 @@ contract("Generic Splitter", accounts => {
     })
 
 	it("should split correctly when value is even and user sends all the needed ETH", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100})
+		await _instance.splitMyMoney(account2, account3, {from: account1, value:100})
 		let balance1 = await _instance.balances.call(account1);
 		let balance2 = await _instance.balances.call(account2);
 		let balance3 = await _instance.balances.call(account3);
@@ -21,7 +21,7 @@ contract("Generic Splitter", accounts => {
 	});
 
 	it("should split correctly when value is odd and user sends all the needed ETH", async () => {
-		await _instance.splitMyMoney(101, account2, account3, {from: account1, value:101})
+		await _instance.splitMyMoney(account2, account3, {from: account1, value:101})
 		let balance1 = await _instance.balances.call(account1);
 		let balance2 = await _instance.balances.call(account2);
 		let balance3 = await _instance.balances.call(account3);
@@ -31,59 +31,22 @@ contract("Generic Splitter", accounts => {
 		assert.strictEqual(balance3.toString(10), "50", "Account3 does not have the correct amount after split.");
 	});
 
-	it("should split correctly when value is even and user sends part of the needed ETH", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
-		await _instance.splitMyMoney(100, account1, account3, {from: account2, value:50}); //account2 uses its 50 balance to deposit 50 in account1 and 50 in account3
-		let balance1 = await _instance.balances.call(account1);
-		let balance2 = await _instance.balances.call(account2);
-		let balance3 = await _instance.balances.call(account3);
-
-		assert.strictEqual(balance1.toString(10), "50", "Account1 does not have the correct amount after split.");
-		assert.strictEqual(balance2.toString(10), "0", "Account2 does not have the correct amount after split.");
-		assert.strictEqual(balance3.toString(10), "100", "Account3 does not have the correct amount after split.");
-	});
-
-	it("should split correctly when value is odd and user sends part of the needed ETH", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
-		await _instance.splitMyMoney(101, account1, account3, {from: account2, value:51}); //account2 uses its 50 balance to deposit 50 in account1 and 50 in account3 (and gets 1 back)
-		let balance1 = await _instance.balances.call(account1);
-		let balance2 = await _instance.balances.call(account2);
-		let balance3 = await _instance.balances.call(account3);
-
-		assert.strictEqual(balance1.toString(10), "50", "Account1 does not have the correct amount after split.");
-		assert.strictEqual(balance2.toString(10), "1", "Account2 does not have the correct amount after split.");
-		assert.strictEqual(balance3.toString(10), "100", "Account3 does not have the correct amount after split.");
-	});
-
-	it("should REVERT the split when user sends less ETH than amount and has 0 balance", async () => {
-		await truffleAssert.reverts(_instance.splitMyMoney(200, account2, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
-	});
-
-	it("should REVERT the split when user sends less ETH than amount + balance", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
-		await truffleAssert.reverts(_instance.splitMyMoney(200, account1, account3, {from: account2, value:100}), truffleAssert.ErrorType.REVERT);
-	});
-
-	it("should REVERT the split when user sends more ETH than amount", async () => {
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account2, account3, {from: account1, value:101}), truffleAssert.ErrorType.REVERT);
-	});
-
 	it("should REVERT the split when msg.sender equals (beneficiary1 || beneficiary2)", async () => {
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account1, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary1 is the same as msg.sender");
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account2, account1, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary2 is the same as msg.sender");
+		await truffleAssert.reverts(_instance.splitMyMoney(account1, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary1 is the same as msg.sender");
+		await truffleAssert.reverts(_instance.splitMyMoney(account2, account1, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary2 is the same as msg.sender");
 	});
 
 	it("should REVERT the split when beneficiary1 equals 0 or beneficiary2 equals 0", async () => {
-		await truffleAssert.reverts(_instance.splitMyMoney(100, "0x0000000000000000000000000000000000000000", account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary1 is address(0)");
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account2, "0x0000000000000000000000000000000000000000", {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary2 is address(0)");
+		await truffleAssert.reverts(_instance.splitMyMoney("0x0000000000000000000000000000000000000000", account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary1 is address(0)");
+		await truffleAssert.reverts(_instance.splitMyMoney(account2, "0x0000000000000000000000000000000000000000", {from: account1, value:100}), truffleAssert.ErrorType.REVERT, "Beneficiary2 is address(0)");
 	});
 
 	it("should REVERT the split when beneficiary1 == beneficiary2", async () => {
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account2, account2, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
+		await truffleAssert.reverts(_instance.splitMyMoney(account2, account2, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
 	});
 
 	it("should be able to withdraw if balance > 0, then balance should become 0", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
+		await _instance.splitMyMoney(account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
 		await truffleAssert.passes(_instance.withdraw({from: account2}), "Unable to withdraw even having funds.");
 		let balance = await _instance.balances.call(account2);
 		assert.strictEqual(balance.toString(10), "0", "After withdraw funds did not go to zero.");
@@ -96,7 +59,7 @@ contract("Generic Splitter", accounts => {
 	it("should actually transfer ETH when someone withdraws", async () => {
 		let balanceBefore = await web3.eth.getBalance(account4);
 
-		await _instance.splitMyMoney(100, account2, account4, {from: account1, value:100, gasPrice:10}); //account1 deposits 50 in account2 and 50 in account3
+		await _instance.splitMyMoney(account2, account4, {from: account1, value:100, gasPrice:10}); //account1 deposits 50 in account2 and 50 in account3
 		let tx = await _instance.withdraw({from: account4});
 		let receipt = tx.receipt;
 				

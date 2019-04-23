@@ -10,9 +10,9 @@ contract("should emit events", accounts => {
     })
 
     it("should emit event with correct parameters when a Split is made", async () => {
-		let result = await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100});
+		let result = await _instance.splitMyMoney(account2, account3, {from: account1, value:100});
 		await truffleAssert.eventEmitted(result, 'MoneySplitted', (ev) => {
-			return ev.totalAmount == 100 && ev.from == account1 && ev.beneficiary1 == account2 && ev.beneficiary2 == account3;
+			return ev.amount == 100 && ev.from == account1 && ev.beneficiary1 == account2 && ev.beneficiary2 == account3;
 		});
 	});
 
@@ -39,7 +39,7 @@ contract("should emit events", accounts => {
 	});
 
 	it("should emit event with correct parameters when a whithdrawal happens", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
+		await _instance.splitMyMoney(account2, account3, {from: account1, value:100}); //account1 deposits 50 in account2 and 50 in account3
 		let result = await _instance.withdraw({from: account2});
 		await truffleAssert.eventEmitted(result, 'Withdrawal', (ev) => {
 		    return ev.amount == 50 && ev.from == account2;

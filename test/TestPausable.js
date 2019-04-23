@@ -37,11 +37,11 @@ contract("Pausable", accounts => {
 
 	it("should REVERT the split if contract is paused", async () => {
 		await _instance.pause({from: account0});
-		await truffleAssert.reverts(_instance.splitMyMoney(100, account2, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
+		await truffleAssert.reverts(_instance.splitMyMoney(account2, account3, {from: account1, value:100}), truffleAssert.ErrorType.REVERT);
 	});
 
 	it("should REVERT the withdraw if contract is paused", async () => {
-		await _instance.splitMyMoney(100, account2, account3, {from: account1, value:100});
+		await _instance.splitMyMoney(account2, account3, {from: account1, value:100});
 		await _instance.pause({from: account0});
 		await truffleAssert.reverts(_instance.withdraw({from: account2}), truffleAssert.ErrorType.REVERT);
 	});
